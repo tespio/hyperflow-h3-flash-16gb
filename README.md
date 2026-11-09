@@ -237,6 +237,28 @@ optimized CUDA operations"* and disables `comfy_kitchen`'s CUDA backend, falling
 eager. This setup ran on the machine's existing torch 2.14.1+cu126 and works fine; a cu13x
 build should claw back a few seconds per run, mostly in text-encoder dequant.
 
+## Known limitations
+
+**A/V sync is approximate.** Container-level sync is exact — over 15 s the audio and video
+streams differ by 8 ms (−267 samples at 32 kHz, one fifth of a frame), and the 5 s pair
+matches to a single sample. There is no drift and nothing is being trimmed at mux time.
+
+What *is* loose is the model's own audio timing. With the same prompt and seed, the 5 s clip
+starts its soundtrack at 0.00 s, while the 15 s clip is near-silent (50 ms RMS ≈ 0.002)
+until **1.85 s** and then builds — even though the picture is active from the first frame:
+
+```text
+  0.5s RMS profile, 15 s clip
+    0.0s  0.001 0.002 0.003 0.032 0.078 0.058 0.041 0.025 0.017 0.014
+    5.0s  0.043 0.053 0.048 0.083 0.074 0.053 0.052 0.172 0.126 0.107
+   10.0s  0.091 0.062 0.058 0.149 0.217 0.120 0.172 0.089 0.045 0.027
+```
+
+That is a two-second lead-in the model chose, not a bug in the pipeline — but it is what
+"the audio is out of sync" looks like in practice. If tight sync matters: keep clips short,
+and put the timing in the prompt ("music starts immediately", "a single clap at the very
+first frame"). This is an observation from a handful of clips, not a measured distribution.
+
 ## Troubleshooting
 
 | Symptom | Fix |
