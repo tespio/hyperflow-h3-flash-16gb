@@ -8,8 +8,9 @@ The model's authors publish benchmarks for 24 GB and 32 GB cards and note that
 16 GB consumer card, in full, with the exact commands and what they actually cost.
 
 **Status: working.** 5.2 s clips at the model's native 1344×768, with a 32 kHz stereo
-soundtrack, in about 4.5 minutes — and a full 15 s clip in 37. No patched kernels, no cloud,
-no quantization beyond the Q4_K_M GGUF the authors ship.
+soundtrack, in about 4.5 minutes — a 960×544 draft in 91 seconds, and a full 15 s clip in
+37 minutes. No patched kernels, no cloud, no quantization beyond the Q4_K_M GGUF the
+authors ship.
 
 ![frame from a generated clip](media/5s-1344x768-frame.png)
 
@@ -30,12 +31,19 @@ off disk on every sampling step; a slow drive would dominate the runtime.
 
 ## Results
 
-Text-to-video, 6 steps, Q4_K_M GGUF, `nvfp4_awq` text encoder, `--fast-disk`:
+Text-to-video, Q4_K_M GGUF, `nvfp4_awq` text encoder, `--fast-disk`:
 
-| Clip | Resolution | Tokens | Per step | Total | Peak VRAM |
+| Preset | Clip | Resolution | Steps | Total | Peak VRAM |
 |---|---|---|---|---|---|
-| 5.2 s (124 frames) | 1344×768 | 37,710 | 36.5 s (36.4–36.7, stable) | **272 s** | 10,975 MiB |
-| 15 s (362 frames) | 1344×768 | 109,062 | 372 s avg (230–524, erratic) | **2,209 s** | 15,974 MiB |
+| Draft | 5.2 s | 960×544 | 4 | **91 s** | 13.4 GB¹ |
+| Standard | 5.2 s | 1344×768 | 6 | **272 s** | 10,975 MiB |
+| Full | 15 s | 1344×768 | 6 | **2,209 s** | 15,974 MiB |
+
+¹ Sampled immediately after a 15 s run, so the card was still releasing memory. Treat it as
+an upper bound; the steady-state figure was ~10.9 GB.
+
+The Draft preset is the one to iterate with — a 3× speedup over Standard, and the result is
+still perfectly watchable. Spend the time on Standard only once the prompt is right.
 
 For comparison, the authors report 151–152 s for the same 5.2 s clip on a 24 GB RTX 4090.
 This card lands at **1.79×** that — 56% of a 4090's throughput, which sits between the
@@ -51,7 +59,9 @@ video     : 1344x768  h264  24 fps  124 frames
 audio     : aac  32000 Hz  2 ch
 ```
 
-Samples: [`media/5s-1344x768.mp4`](media/5s-1344x768.mp4) · [`media/15s-1344x768.mp4`](media/15s-1344x768.mp4)
+Samples: [`media/5s-960x544-4steps.mp4`](media/5s-960x544-4steps.mp4) ·
+[`media/5s-1344x768.mp4`](media/5s-1344x768.mp4) ·
+[`media/15s-1344x768.mp4`](media/15s-1344x768.mp4)
 
 ## What this model is
 
@@ -145,6 +155,10 @@ time   : 272.2 s
 peak   : 10,975 MiB VRAM
 ```
 
+All four scripts take a `-ComfyUI <path>` argument. It defaults to a checkout next to this
+repository, which is what step 1 creates — pass it explicitly if your ComfyUI lives
+somewhere else.
+
 ---
 
 ## How 16 GB actually fits
@@ -160,9 +174,10 @@ loaded partially; 2353.20 MB usable, 2105.13 MB loaded,
 HyperFlow: transformer weights in disk (weights_in=auto)
 ```
 
-So ComfyUI keeps **~2.1 GB of the 8.4 GB transformer resident** and streams the other
-6.8 GB from the 980 PRO on every step. The 14.6 GB text encoder can never co-reside with it,
-so the two are swapped between the encode and sample stages.
+So ComfyUI keeps **about 2.1 GB of the transformer resident** — the log's own numbers are
+`2105 MB loaded, 6832 MB offloaded` — and streams the rest from the 980 PRO on every step.
+The 14.6 GB text encoder can never co-reside with it, so the two are swapped between the
+encode and sample stages.
 
 At 15 s the budget collapses entirely:
 
@@ -190,7 +205,9 @@ Both effects stack, exactly as the model card warns: *"Attention cost grows with
 of the token count."*
 
 Practical consequence: **halve the resolution before you halve anything else.** Tokens scale
-with pixel count, so 960×544 is ~4× fewer tokens and ~16× less attention work.
+with pixel count, so 960×544 is roughly 4× fewer tokens and ~16× less attention work — and
+dropping to 4 steps compounds it. That is where the 91 s Draft preset comes from: 3× faster
+than Standard, which is the difference between iterating on a prompt and going for coffee.
 
 ## Gotchas
 

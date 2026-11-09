@@ -3,7 +3,8 @@
 #   .\scripts\generate.ps1 -Prompt "A street musician plays..." -Length 124
 #   .\scripts\generate.ps1 -Prompt "..." -Width 960 -Height 544 -Length 124 -Steps 4
 #
-# Requires the server from 03-start-server.ps1 to be listening.
+# -ComfyUI defaults to a ComfyUI checkout next to this repository, which is what
+# 01-install-comfyui.ps1 creates. Point it elsewhere if yours lives somewhere else.
 
 param(
     [Parameter(Mandatory = $true)][string]$Prompt,
@@ -13,13 +14,17 @@ param(
     [ValidateSet(4, 6, 8)][int]$Steps = 6,
     [int]$Seed = 42,
     [int]$TimeoutMin = 60,
+    [string]$ComfyUI = (Join-Path (Split-Path -Parent $PSScriptRoot) 'ComfyUI'),
     [string]$Server = 'http://127.0.0.1:8188'
 )
 
 $ErrorActionPreference = 'Stop'
 
-$root = Split-Path -Parent $PSScriptRoot
-$template = Join-Path $root 'ComfyUI\custom_nodes\ComfyUI-HyperFlow-Flash\example_workflows\api\hyperflow_t2v_api.json'
+$template = Join-Path $ComfyUI 'custom_nodes\ComfyUI-HyperFlow-Flash\example_workflows\api\hyperflow_t2v_api.json'
+if (-not (Test-Path $template)) {
+    throw "Workflow template not found: $template`nPass -ComfyUI <path to your ComfyUI checkout>."
+}
+
 $wf = Get-Content $template -Raw | ConvertFrom-Json
 
 foreach ($k in $wf.PSObject.Properties.Name) {
@@ -48,11 +53,14 @@ $peakVram = 0
 while ((Get-Date) -lt $deadline) {
     Start-Sleep -Seconds 5
 
-    $vram = [int](((nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits) -replace '\s', '') -split "`n" | Select-Object -First 1)
+    $vram = [int]((nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits) -replace '\s', '')
     if ($vram -gt $peakVram) { $peakVram = $vram }
 
     $entry = (Invoke-RestMethod -Uri "$Server/history/$id").$id
-    if (-not $entry) { continue }
+    if (-not $entry) {
+        Write-Host ("[{0,4}s] {1} MiB VRAM" -f [int]((Get-Date) - $t0).TotalSeconds, $vram)
+        continue
+    }
 
     $elapsed = (Get-Date) - $t0
 
@@ -63,8 +71,9 @@ while ((Get-Date) -lt $deadline) {
     }
 
     foreach ($nodeId in $entry.outputs.PSObject.Properties.Name) {
-        $o = $entry.outputs.$nodeId
-        foreach ($v in $o.videos) { Write-Host ("output : output\{0}\{1}" -f $v.subfolder, $v.filename) }
+        foreach ($v in $entry.outputs.$nodeId.videos) {
+            Write-Host ("output : output\{0}\{1}" -f $v.subfolder, $v.filename)
+        }
     }
     Write-Host ("time   : {0:N1} s" -f $elapsed.TotalSeconds)
     Write-Host ("peak   : {0:N0} MiB VRAM" -f $peakVram)

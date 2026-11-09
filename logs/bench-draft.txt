@@ -1,0 +1,18 @@
+Draft preset - the one to iterate with.
+5.2 s clip (124 frames), 960x544, 4 steps, Q4_K_M GGUF, --fast-disk.
+
+queued ab5d114f-...  960x544 124f  4 steps
+[   5s] 14298 MiB VRAM
+[  10s]  5129 MiB VRAM
+[  15s] 10906 MiB VRAM
+...
+[  71s] 12553 MiB VRAM
+[  86s] 13387 MiB VRAM
+time   : 91.0 s
+peak   : 14,298 MiB VRAM
+
+The 14,298 MiB reading was taken 5 s after submission, while the card was still
+releasing memory from the previous 15 s job. Steady state during sampling was
+~10.9-13.4 GB. Treat 14.3 GB as an upper bound, not the model's true requirement.
+
+Output verified: 960x544, h264, 24 fps, 124 frames, AAC 32 kHz stereo.

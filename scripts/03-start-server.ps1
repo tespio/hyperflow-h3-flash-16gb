@@ -4,9 +4,12 @@
 # weights out of the OS file page cache instead of copying them into pinned RAM,
 # which keeps anonymous RSS around 8-16 GB.
 
+param(
+    [string]$ComfyUI = (Join-Path (Split-Path -Parent $PSScriptRoot) 'ComfyUI')
+)
+
 $ErrorActionPreference = 'Stop'
-$root = Split-Path -Parent $PSScriptRoot
-Set-Location (Join-Path $root 'ComfyUI')
+Set-Location $ComfyUI
 
 $env:PYTHONUNBUFFERED = '1'
 .\.venv\Scripts\python.exe main.py --fast-disk

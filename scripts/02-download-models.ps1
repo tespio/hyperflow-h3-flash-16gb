@@ -1,13 +1,14 @@
-# Runs from the repository root.
 # Downloads the Q4_K_M transformer, the nvfp4 text encoder, and both VAEs (~28.5 GB).
-#
 # Needs the `hf` CLI:  pip install -U huggingface_hub
+
+param(
+    [string]$ComfyUI = (Join-Path (Split-Path -Parent $PSScriptRoot) 'ComfyUI')
+)
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-Set-Location $root
 
-$models = Join-Path $root 'ComfyUI\models'
+$models = Join-Path $ComfyUI 'models'
 New-Item -ItemType Directory -Force -Path `
     (Join-Path $models 'diffusion_models'), `
     (Join-Path $models 'text_encoders'), `
@@ -27,12 +28,11 @@ hf download Comfy-Org/MiniMax-H3 `
     --local-dir (Join-Path $root 'dl2')
 
 # ComfyUI wants them flat in the models directories, not in the repo subfolders.
-Move-Item (Join-Path $root 'dl\fl2va_gguf\*.gguf')             (Join-Path $models 'diffusion_models') -Force
-Move-Item (Join-Path $root 'dl2\text_encoders\*.safetensors')  (Join-Path $models 'text_encoders')    -Force
-Move-Item (Join-Path $root 'dl2\vae\*.safetensors')            (Join-Path $models 'vae')              -Force
+Move-Item (Join-Path $root 'dl\fl2va_gguf\*.gguf')            (Join-Path $models 'diffusion_models') -Force
+Move-Item (Join-Path $root 'dl2\text_encoders\*.safetensors') (Join-Path $models 'text_encoders')    -Force
+Move-Item (Join-Path $root 'dl2\vae\*.safetensors')           (Join-Path $models 'vae')              -Force
 
 Write-Host "`nWeights in place:"
-Get-ChildItem $models -Recurse -File -Filter *.safetensors |
-    Select-Object @{n='GB';e={[math]::Round($_.Length/1GB,2)}},Name
-Get-ChildItem $models -Recurse -File -Filter *.gguf |
-    Select-Object @{n='GB';e={[math]::Round($_.Length/1GB,2)}},Name
+Get-ChildItem $models -Recurse -File -Include *.safetensors, *.gguf |
+    Select-Object @{n='GB';e={[math]::Round($_.Length/1GB,2)}},Name |
+    Format-Table -AutoSize
