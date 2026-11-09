@@ -1,0 +1,33 @@
+Verbatim sampler output, 15 s clip (362 frames), 1344x768, 6 steps.
+RTX 4070 Ti SUPER 16 GB, Q4_K_M GGUF, --fast-disk.
+
+  0%|          | 0/6 [00:00<?, ?it/s]
+  0%|          | 0/6 [04:33<?, ?it/s,  Model Initialization complete!  ]
+ 17%|#6        | 1/6 [04:33<22:48, 273.65s/it,  Model Initialization complete!  ]
+ 17%|#6        | 1/6 [13:17<22:48, 273.65s/it]
+ 33%|###3      | 2/6 [13:17<26:35, 398.87s/it]
+ 50%|#####     | 3/6 [21:51<25:39, 513.28s/it]
+ 67%|######6   | 4/6 [26:04<08:26, 253.10s/it]
+ 83%|########3 | 5/6 [29:54<03:50, 230.38s/it]
+100%|##########| 6/6 [37:09<00:00, 434.84s/it]
+100%|##########| 6/6 [37:09<00:00, 371.56s/it]
+
+Comfy model compiler graph breaks: 37, rogues: 0
+Prompt executed in 00:36:49
+
+Per-step wall time derived from the bar updates:
+
+  step 1   273 s   (includes 4.5 min model initialization)
+  step 2   524 s
+  step 3   514 s
+  step 4   253 s
+  step 5   230 s
+  step 6   435 s
+  ---------------------
+  mean     372 s
+
+The spread is the interesting part: the same step costs 4 minutes or 9 minutes
+depending on how the page cache and the disk streaming line up. At 15 s nothing
+stays resident, so every step re-reads the whole 8.4 GB transformer.
+
+Peak VRAM observed via nvidia-smi during the run: 15,974 MiB of 16,376 MiB (97.5%).

@@ -1,0 +1,16 @@
+# Model weights and the ComfyUI checkout live outside version control.
+ComfyUI/
+dl/
+dl2/
+
+# Anything downloaded or generated
+*.gguf
+*.safetensors
+*.mp4
+!media/*.mp4
+
+output/
+__pycache__/
+*.pyc
+.venv/
+probe.py

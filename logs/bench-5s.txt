@@ -1,0 +1,26 @@
+Verbatim sampler output, 5.2 s clip (124 frames), 1344x768, 6 steps.
+RTX 4070 Ti SUPER 16 GB, Q4_K_M GGUF, --fast-disk.
+
+  0%|          | 0/6 [00:00<?, ?it/s]
+  0%|          | 0/6 [00:40<?, ?it/s,   Model Initializing ...  ]
+  0%|          | 0/6 [00:40<?, ?it/s,  Model Initialization complete!  ]
+ 17%|#6        | 1/6 [00:40<03:24, 40.93s/it,  Model Initialization complete!  ]
+ 17%|#6        | 1/6 [01:12<03:24, 40.93s/it]
+ 33%|###3      | 2/6 [01:12<02:25, 36.42s/it]
+ 50%|#####     | 3/6 [01:49<01:49, 36.44s/it]
+ 67%|######6   | 4/6 [02:25<01:13, 36.56s/it]
+ 83%|########3 | 5/6 [03:02<00:36, 36.72s/it]
+100%|##########| 6/6 [03:39<00:00, 36.63s/it]
+
+Comfy model compiler graph breaks: 45, rogues: 0
+Prompt executed in 272.20 seconds
+
+Memory placement reported at load time:
+
+Model MiniMaxH3TEModel_ prepared for dynamic VRAM loading. 14956MB Staged.
+model weight dtype torch.bfloat16, manual cast: None
+model_type FLOW_AV
+HyperFlow: 18 factorized blocks, two-time=True, 6-step schedule
+HyperFlow: transformer weights in disk (weights_in=auto)
+loaded partially; 2353.20 MB usable, 2105.13 MB loaded, 6831.58 MB offloaded,
+                 248.06 MB buffer reserved, lowvram patches: 0
